@@ -6,8 +6,15 @@ import os
 
 app = Flask(__name__)
 
-# Load model
-model = tf.keras.models.load_model("smart_krishi_vision_model.h5")
+# 🔥 Lazy loading (important for Render)
+model = None
+
+def get_model():
+    global model
+    if model is None:
+        model = tf.keras.models.load_model("smart_krishi_vision_model.h5")
+    return model
+
 
 class_names = [
     "Corn_Blight",
@@ -60,38 +67,37 @@ def preprocess(image):
     image = np.expand_dims(image, axis=0)
     return image
 
+
+# 🔥 Health check (important for Render)
 @app.route("/")
 def home():
-    return "Disease API Running 🚀"
+    return "API Running 🚀"
+
 
 @app.route("/predict-disease", methods=["POST"])
 def predict():
     try:
         if "image" not in request.files:
-            return jsonify({
-                "status": "error",
-                "message": "No image provided"
-            }), 400
+            return jsonify({"status": "error", "message": "No image provided"}), 400
 
         file = request.files["image"]
 
         if file.filename == "":
-            return jsonify({
-                "status": "error",
-                "message": "Empty file selected"
-            }), 400
+            return jsonify({"status": "error", "message": "Empty file"}), 400
 
         image = Image.open(file).convert("RGB")
         processed = preprocess(image)
 
+        model = get_model()
         preds = model.predict(processed)[0]
+
         top_index = np.argmax(preds)
         confidence = preds[top_index]
 
         if confidence < 0.5:
             return jsonify({
                 "status": "not_recognized",
-                "message": "Unable to recognize the disease. Upload a clear crop image."
+                "message": "Upload a clear crop leaf image"
             })
 
         full_label = class_names[top_index]
@@ -103,7 +109,7 @@ def predict():
         return jsonify({
             "crop": crop,
             "disease": format_name(disease),
-            "solution": solutions.get(full_label, "Consult agricultural expert")
+            "solution": solutions.get(full_label, "Consult expert")
         })
 
     except Exception:
@@ -113,7 +119,7 @@ def predict():
         }), 500
 
 
-# 🔥 IMPORTANT FOR RENDER
+# 🔥 Render PORT config
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5001))
     app.run(host="0.0.0.0", port=port)
