@@ -6,48 +6,58 @@ import io
 import traceback
 
 app = Flask(__name__)
-
 model = None
 
 def get_model():
     global model
     if model is None:
         os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
-        os.environ["TF_USE_LEGACY_KERAS"]   = "1"   # force tf.compat.v1 Keras backend
-
         import tensorflow as tf
         tf.config.set_visible_devices([], "GPU")
 
+        print(f"[Model] TF={tf.__version__}  Keras={tf.keras.__version__}")
         print("[Model] Loading smart_krishi_vision_model.h5 ...")
+
+        # Try 1: Direct load (works if TF version matches save version)
         try:
-            # Primary: load with legacy Keras so batch_shape / optional are recognized
             model = tf.keras.models.load_model(
                 "smart_krishi_vision_model.h5",
                 compile=False
             )
-            print("[Model] Loaded via tf.keras (legacy).")
+            print("[Model] ✅ Loaded successfully.")
+            return model
+        except Exception as e1:
+            print(f"[Model] ❌ Direct load failed: {e1}")
 
-        except TypeError as e:
-            # Fallback: load weights-only by rebuilding the input manually
-            print(f"[Model] tf.keras load failed ({e}), trying custom_objects fallback...")
-            from tensorflow.python.keras.layers import InputLayer as LegacyInputLayer
+        # Try 2: Load via SavedModel format (most version-agnostic)
+        try:
+            model = tf.saved_model.load("smart_krishi_saved_model")
+            print("[Model] ✅ Loaded via SavedModel format.")
+            return model
+        except Exception as e2:
+            print(f"[Model] ❌ SavedModel load failed: {e2}")
 
-            def legacy_input_layer(**kwargs):
-                # Strip the two offending keys before passing to modern InputLayer
-                kwargs.pop("batch_shape", None)
-                kwargs.pop("optional",    None)
-                # batch_shape → input_shape (drop the None batch dim)
-                shape = kwargs.pop("shape", None)
-                if shape is None:
-                    shape = (224, 224, 3)
-                return tf.keras.layers.InputLayer(input_shape=shape, **kwargs)
-
-            model = tf.keras.models.load_model(
-                "smart_krishi_vision_model.h5",
-                compile=False,
-                custom_objects={"InputLayer": legacy_input_layer}
+        # Try 3: weights-only — rebuild architecture manually then load weights
+        try:
+            print("[Model] Attempting weights-only load with hardcoded MobileNetV2 base...")
+            base = tf.keras.applications.MobileNetV2(
+                input_shape=(224, 224, 3),
+                include_top=False,
+                weights=None
             )
-            print("[Model] Loaded via custom_objects fallback.")
+            x = tf.keras.layers.GlobalAveragePooling2D()(base.output)
+            x = tf.keras.layers.Dense(16, activation="softmax")(x)
+            model = tf.keras.Model(inputs=base.input, outputs=x)
+            model.load_weights("smart_krishi_vision_model_weights.h5")
+            print("[Model] ✅ Loaded via weights-only fallback.")
+            return model
+        except Exception as e3:
+            print(f"[Model] ❌ Weights-only load failed: {e3}")
+
+        raise RuntimeError(
+            "All model loading attempts failed. "
+            "Please run convert_model.py locally and re-upload the converted model."
+        )
 
     return model
 
@@ -102,7 +112,8 @@ def health():
 def predict():
     try:
         if "image" not in request.files:
-            return jsonify({"status": "error", "message": "No image provided. Field name must be 'image'."}), 400
+            return jsonify({"status": "error",
+                            "message": "No image provided. Field name must be 'image'."}), 400
 
         file = request.files["image"]
         if file.filename == "":
@@ -115,12 +126,12 @@ def predict():
         try:
             image = Image.open(io.BytesIO(raw_bytes)).convert("RGB")
         except Exception:
-            return jsonify({"status": "error", "message": "Cannot open image. Send a valid JPEG or PNG."}), 400
+            return jsonify({"status": "error",
+                            "message": "Cannot open image. Send a valid JPEG or PNG."}), 400
 
         processed = preprocess(image)
-
-        m     = get_model()
-        preds = m.predict(processed, verbose=0)[0]
+        m         = get_model()
+        preds     = m.predict(processed, verbose=0)[0]
 
         top_index  = int(np.argmax(preds))
         confidence = float(preds[top_index])
@@ -147,7 +158,8 @@ def predict():
 
     except MemoryError:
         traceback.print_exc()
-        return jsonify({"status": "error", "message": "Server out of memory. Try a smaller image."}), 500
+        return jsonify({"status": "error",
+                        "message": "Server out of memory. Try a smaller image."}), 500
     except Exception as e:
         traceback.print_exc()
         return jsonify({"status": "error", "message": f"Server error: {str(e)}"}), 500
