@@ -1,5 +1,7 @@
 flask==3.0.3
-tensorflow-cpu==2.15.0
-numpy==1.26.4
+# Pin to tf 2.13 — last version that ships Keras 2.x (understands batch_shape/optional)
+# Your .h5 was saved with Keras 2.x so this is the correct match
+tensorflow-cpu==2.13.0
+numpy==1.24.3
 pillow==10.3.0
 gunicorn==22.0.0
