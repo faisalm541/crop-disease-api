@@ -1,7 +1,7 @@
-flask==3.0.3
-# tensorflow-cpu 2.15 ships Keras 2.x BUT your model was saved with Keras 3.x
-# So we need tensorflow >= 2.16 which bundles standalone keras 3.x
-tensorflow-cpu==2.16.2
-numpy==1.26.4
-pillow==10.3.0
-gunicorn==22.0.0
+flask
+gunicorn
+numpy
+opencv-python-headless
+pillow
+tensorflow-cpu==2.21.0
+keras==3.14.0
