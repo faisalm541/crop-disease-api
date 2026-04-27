@@ -14,51 +14,13 @@ def get_model():
         os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
         import tensorflow as tf
         tf.config.set_visible_devices([], "GPU")
-
         print(f"[Model] TF={tf.__version__}  Keras={tf.keras.__version__}")
         print("[Model] Loading smart_krishi_vision_model.h5 ...")
-
-        # Try 1: Direct load (works if TF version matches save version)
-        try:
-            model = tf.keras.models.load_model(
-                "smart_krishi_vision_model.h5",
-                compile=False
-            )
-            print("[Model] ✅ Loaded successfully.")
-            return model
-        except Exception as e1:
-            print(f"[Model] ❌ Direct load failed: {e1}")
-
-        # Try 2: Load via SavedModel format (most version-agnostic)
-        try:
-            model = tf.saved_model.load("smart_krishi_saved_model")
-            print("[Model] ✅ Loaded via SavedModel format.")
-            return model
-        except Exception as e2:
-            print(f"[Model] ❌ SavedModel load failed: {e2}")
-
-        # Try 3: weights-only — rebuild architecture manually then load weights
-        try:
-            print("[Model] Attempting weights-only load with hardcoded MobileNetV2 base...")
-            base = tf.keras.applications.MobileNetV2(
-                input_shape=(224, 224, 3),
-                include_top=False,
-                weights=None
-            )
-            x = tf.keras.layers.GlobalAveragePooling2D()(base.output)
-            x = tf.keras.layers.Dense(16, activation="softmax")(x)
-            model = tf.keras.Model(inputs=base.input, outputs=x)
-            model.load_weights("smart_krishi_vision_model_weights.h5")
-            print("[Model] ✅ Loaded via weights-only fallback.")
-            return model
-        except Exception as e3:
-            print(f"[Model] ❌ Weights-only load failed: {e3}")
-
-        raise RuntimeError(
-            "All model loading attempts failed. "
-            "Please run convert_model.py locally and re-upload the converted model."
+        model = tf.keras.models.load_model(
+            "smart_krishi_vision_model.h5",
+            compile=False
         )
-
+        print("[Model] Loaded successfully.")
     return model
 
 
