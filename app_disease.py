@@ -1,125 +1,49 @@
 from flask import Flask, request, jsonify
-import tensorflow as tf
 import numpy as np
-from PIL import Image
-import os
+import cv2
+from tensorflow.keras.models import load_model
 
 app = Flask(__name__)
 
-# 🔥 Lazy loading (important for Render)
-model = None
-
-def get_model():
-    global model
-    if model is None:
-        model = tf.keras.models.load_model("smart_krishi_vision_model.h5")
-    return model
-
-
-class_names = [
-    "Corn_Blight",
-    "Corn_Rust",
-    "Corn_Healthy",
-    "Potato_Early_blight",
-    "Potato_Late_blight",
-    "Potato_Healthy",
-    "Tomato_Bacterial_spot",
-    "Tomato_Early_blight",
-    "Tomato_Late_blight",
-    "Tomato_Leaf_Mold",
-    "Tomato_Septoria",
-    "Tomato_Spider_mites",
-    "Tomato_Target_Spot",
-    "Tomato_Mosaic",
-    "Tomato_Yellow_Leaf",
-    "Tomato_Healthy"
-]
-
-solutions = {
-    "Potato_Early_blight": "Use fungicide (Mancozeb). Remove infected leaves. Avoid overhead watering.",
-    "Potato_Late_blight": "Apply copper-based fungicide. Improve air circulation.",
-    "Potato_Healthy": "Your crop is healthy.",
-
-    "Corn_Blight": "Use resistant varieties. Apply fungicide.",
-    "Corn_Rust": "Use fungicide (Triazole). Monitor humidity.",
-    "Corn_Healthy": "Your crop is healthy.",
-
-    "Tomato_Bacterial_spot": "Use copper spray.",
-    "Tomato_Early_blight": "Apply fungicide. Remove infected leaves.",
-    "Tomato_Late_blight": "Use fungicide. Avoid moisture.",
-    "Tomato_Leaf_Mold": "Increase ventilation.",
-    "Tomato_Septoria": "Remove infected leaves.",
-    "Tomato_Spider_mites": "Use neem oil.",
-    "Tomato_Target_Spot": "Apply fungicide.",
-    "Tomato_Mosaic": "Remove infected plants.",
-    "Tomato_Yellow_Leaf": "Control whiteflies.",
-    "Tomato_Healthy": "Your crop is healthy."
-}
-
-IMG_SIZE = 224
-
-def format_name(name):
-    return name.replace("_", " ")
-
-def preprocess(image):
-    image = image.resize((IMG_SIZE, IMG_SIZE))
-    image = np.array(image) / 255.0
-    image = np.expand_dims(image, axis=0)
-    return image
-
-
-# 🔥 Health check (important for Render)
-@app.route("/")
-def home():
-    return "API Running 🚀"
-
+model = load_model("smart_krishi_vision_model.h5")
 
 @app.route("/predict-disease", methods=["POST"])
-def predict():
+def predict_disease():
     try:
-        if "image" not in request.files:
-            return jsonify({"status": "error", "message": "No image provided"}), 400
+        # Accept BOTH keys (fix mismatch issue)
+        if "image" in request.files:
+            file = request.files["image"]
+        elif "file" in request.files:
+            file = request.files["file"]
+        else:
+            return jsonify({"error": "No file provided"}), 400
 
-        file = request.files["image"]
+        # Read image safely
+        file_bytes = np.frombuffer(file.read(), np.uint8)
+        img = cv2.imdecode(file_bytes, cv2.IMREAD_COLOR)
 
-        if file.filename == "":
-            return jsonify({"status": "error", "message": "Empty file"}), 400
+        if img is None:
+            return jsonify({"error": "Invalid image"}), 400
 
-        image = Image.open(file).convert("RGB")
-        processed = preprocess(image)
+        # Preprocess
+        img = cv2.resize(img, (224, 224))
+        img = img / 255.0
+        img = np.expand_dims(img, axis=0)
 
-        model = get_model()
-        preds = model.predict(processed)[0]
-
-        top_index = np.argmax(preds)
-        confidence = preds[top_index]
-
-        if confidence < 0.5:
-            return jsonify({
-                "status": "not_recognized",
-                "message": "Upload a clear crop leaf image"
-            })
-
-        full_label = class_names[top_index]
-        parts = full_label.split("_", 1)
-
-        crop = parts[0]
-        disease = parts[1] if len(parts) > 1 else "Healthy"
+        # Predict
+        prediction = model.predict(img)
+        predicted_class = int(np.argmax(prediction))
 
         return jsonify({
-            "crop": crop,
-            "disease": format_name(disease),
-            "solution": solutions.get(full_label, "Consult expert")
+            "status": "success",
+            "prediction": predicted_class
         })
 
-    except Exception:
+    except Exception as e:
         return jsonify({
             "status": "error",
-            "message": "Invalid image or server error"
+            "message": str(e)
         }), 500
 
-
-# 🔥 Render PORT config
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5001))
-    app.run(host="0.0.0.0", port=port)
+    app.run(debug=True)
