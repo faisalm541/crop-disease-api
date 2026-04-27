@@ -1,7 +1,7 @@
 flask==3.0.3
-# Pin to tf 2.13 — last version that ships Keras 2.x (understands batch_shape/optional)
-# Your .h5 was saved with Keras 2.x so this is the correct match
-tensorflow-cpu==2.13.0
-numpy==1.24.3
+# tensorflow-cpu 2.15 ships Keras 2.x BUT your model was saved with Keras 3.x
+# So we need tensorflow >= 2.16 which bundles standalone keras 3.x
+tensorflow-cpu==2.16.2
+numpy==1.26.4
 pillow==10.3.0
 gunicorn==22.0.0
