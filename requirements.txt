@@ -1,6 +1,7 @@
 flask
-tensorflow-cpu==2.15.0
-numpy
-pillow
 gunicorn
+numpy
 opencv-python-headless
+pillow
+tensorflow-cpu==2.10.0
+keras==2.10.0
