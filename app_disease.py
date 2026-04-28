@@ -36,46 +36,57 @@ def get_model():
     return model
 
 
-# ── 38-class label map ────────────────────────────────────────
 CLASS_MAP = {
-    0:  {"crop": "Apple",       "disease": "Apple Scab",             "solution": "Apply fungicide containing captan or myclobutanil. Remove and destroy infected leaves. Avoid overhead irrigation."},
-    1:  {"crop": "Apple",       "disease": "Black Rot",              "solution": "Prune infected branches. Apply copper-based fungicide. Ensure good air circulation around the tree."},
-    2:  {"crop": "Apple",       "disease": "Cedar Apple Rust",       "solution": "Apply fungicide at early pink stage. Remove nearby juniper trees if possible. Use resistant apple varieties."},
-    3:  {"crop": "Apple",       "disease": "Healthy",                "solution": "No treatment needed. Maintain regular watering and balanced fertilization."},
-    4:  {"crop": "Blueberry",   "disease": "Healthy",                "solution": "No treatment needed. Ensure acidic soil pH between 4.5 and 5.5."},
-    5:  {"crop": "Cherry",      "disease": "Powdery Mildew",         "solution": "Apply sulfur-based fungicide. Improve air circulation. Avoid excess nitrogen fertilization."},
-    6:  {"crop": "Cherry",      "disease": "Healthy",                "solution": "No treatment needed. Maintain proper pruning and irrigation schedule."},
-    7:  {"crop": "Corn (Maize)","disease": "Cercospora Leaf Spot",   "solution": "Apply fungicide containing strobilurin. Use resistant hybrids. Practice crop rotation."},
-    8:  {"crop": "Corn (Maize)","disease": "Common Rust",            "solution": "Apply foliar fungicide at early rust development. Use resistant maize varieties."},
-    9:  {"crop": "Corn (Maize)","disease": "Northern Leaf Blight",   "solution": "Apply fungicide at early tassel stage. Rotate crops. Use resistant hybrids."},
-    10: {"crop": "Corn (Maize)","disease": "Healthy",                "solution": "No treatment needed. Ensure adequate nitrogen supply for healthy growth."},
-    11: {"crop": "Grape",       "disease": "Black Rot",              "solution": "Apply fungicide from bud break. Remove mummified fruit. Prune for air circulation."},
-    12: {"crop": "Grape",       "disease": "Esca (Black Measles)",   "solution": "No curative treatment available. Remove infected wood. Apply wound sealant after pruning."},
-    13: {"crop": "Grape",       "disease": "Leaf Blight",            "solution": "Apply copper-based fungicide. Remove infected leaves. Avoid overhead irrigation."},
-    14: {"crop": "Grape",       "disease": "Healthy",                "solution": "No treatment needed. Maintain regular canopy management."},
-    15: {"crop": "Orange",      "disease": "Citrus Greening",        "solution": "No cure available. Remove infected trees. Control psyllid vector with insecticide."},
-    16: {"crop": "Peach",       "disease": "Bacterial Spot",         "solution": "Apply copper-based bactericide. Avoid overhead irrigation. Use resistant varieties."},
-    17: {"crop": "Peach",       "disease": "Healthy",                "solution": "No treatment needed. Ensure good drainage and balanced fertilization."},
-    18: {"crop": "Bell Pepper", "disease": "Bacterial Spot",         "solution": "Apply copper hydroxide spray. Avoid working in wet fields. Use disease-free seeds."},
-    19: {"crop": "Bell Pepper", "disease": "Healthy",                "solution": "No treatment needed. Maintain consistent moisture and adequate calcium supply."},
-    20: {"crop": "Potato",      "disease": "Early Blight",           "solution": "Apply fungicide containing chlorothalonil or mancozeb. Remove infected leaves. Practice crop rotation."},
-    21: {"crop": "Potato",      "disease": "Late Blight",            "solution": "Apply metalaxyl or cymoxanil fungicide immediately. Destroy infected plants. Avoid overhead irrigation."},
-    22: {"crop": "Potato",      "disease": "Healthy",                "solution": "No treatment needed. Hill soil around plants and maintain consistent watering."},
-    23: {"crop": "Raspberry",   "disease": "Healthy",                "solution": "No treatment needed. Prune old canes after harvest."},
-    24: {"crop": "Soybean",     "disease": "Healthy",                "solution": "No treatment needed. Ensure proper inoculation with Rhizobium bacteria."},
-    25: {"crop": "Squash",      "disease": "Powdery Mildew",         "solution": "Apply potassium bicarbonate or sulfur spray. Improve air circulation. Avoid overhead watering."},
-    26: {"crop": "Strawberry",  "disease": "Leaf Scorch",            "solution": "Apply fungicide containing captan. Remove infected leaves. Ensure good drainage."},
-    27: {"crop": "Strawberry",  "disease": "Healthy",                "solution": "No treatment needed. Mulch around plants to retain moisture."},
-    28: {"crop": "Tomato",      "disease": "Bacterial Spot",         "solution": "Apply copper-based bactericide. Avoid working in wet conditions. Use certified disease-free seeds."},
-    29: {"crop": "Tomato",      "disease": "Early Blight",           "solution": "Apply chlorothalonil fungicide. Remove lower infected leaves. Practice crop rotation."},
-    30: {"crop": "Tomato",      "disease": "Late Blight",            "solution": "Apply metalaxyl immediately. Destroy infected plants. Avoid overhead irrigation."},
-    31: {"crop": "Tomato",      "disease": "Leaf Mold",              "solution": "Improve greenhouse ventilation. Apply fungicide containing chlorothalonil."},
-    32: {"crop": "Tomato",      "disease": "Septoria Leaf Spot",     "solution": "Apply fungicide at first sign. Remove infected leaves. Mulch to prevent soil splash."},
-    33: {"crop": "Tomato",      "disease": "Spider Mites",           "solution": "Apply miticide or neem oil. Increase humidity. Remove heavily infested leaves."},
-    34: {"crop": "Tomato",      "disease": "Target Spot",            "solution": "Apply fungicide containing azoxystrobin. Improve air circulation. Rotate crops."},
-    35: {"crop": "Tomato",      "disease": "Yellow Leaf Curl Virus", "solution": "No cure. Remove infected plants. Control whitefly vector. Use resistant varieties."},
-    36: {"crop": "Tomato",      "disease": "Mosaic Virus",           "solution": "No cure. Remove infected plants. Disinfect tools. Use virus-free seeds."},
-    37: {"crop": "Tomato",      "disease": "Healthy",                "solution": "No treatment needed. Maintain consistent watering and calcium supply."},
+    0: {"crop": "Corn (Maize)", "disease": "Cercospora Leaf Spot (Gray Leaf Spot)",
+        "solution": "Apply fungicide containing strobilurin. Use resistant hybrids. Practice crop rotation."},
+
+    1: {"crop": "Corn (Maize)", "disease": "Common Rust",
+        "solution": "Apply foliar fungicide at early stage. Use resistant maize varieties."},
+
+    2: {"crop": "Corn (Maize)", "disease": "Northern Leaf Blight",
+        "solution": "Apply fungicide at early tassel stage. Rotate crops. Use resistant hybrids."},
+
+    3: {"crop": "Corn (Maize)", "disease": "Healthy",
+        "solution": "No treatment needed. Maintain proper nitrogen and irrigation."},
+
+    4: {"crop": "Potato", "disease": "Early Blight",
+        "solution": "Apply fungicide like chlorothalonil. Remove infected leaves. Practice crop rotation."},
+
+    5: {"crop": "Potato", "disease": "Late Blight",
+        "solution": "Apply metalaxyl immediately. Destroy infected plants. Avoid overhead watering."},
+
+    6: {"crop": "Potato", "disease": "Healthy",
+        "solution": "No treatment needed. Maintain proper soil moisture and spacing."},
+
+    7: {"crop": "Tomato", "disease": "Bacterial Spot",
+        "solution": "Apply copper-based bactericide. Avoid working in wet conditions."},
+
+    8: {"crop": "Tomato", "disease": "Early Blight",
+        "solution": "Apply fungicide like chlorothalonil. Remove lower infected leaves."},
+
+    9: {"crop": "Tomato", "disease": "Late Blight",
+        "solution": "Apply fungicide immediately. Remove infected plants."},
+
+    10: {"crop": "Tomato", "disease": "Leaf Mold",
+         "solution": "Improve ventilation. Apply fungicide like chlorothalonil."},
+
+    11: {"crop": "Tomato", "disease": "Septoria Leaf Spot",
+         "solution": "Apply fungicide. Remove infected leaves. Use mulch to prevent spread."},
+
+    12: {"crop": "Tomato", "disease": "Spider Mites",
+         "solution": "Apply neem oil or miticide. Increase humidity. Remove heavily infected leaves."},
+
+    13: {"crop": "Tomato", "disease": "Target Spot",
+         "solution": "Apply fungicide like azoxystrobin. Improve air circulation."},
+
+    14: {"crop": "Tomato", "disease": "Yellow Leaf Curl Virus",
+         "solution": "No cure. Remove infected plants. Control whiteflies."},
+
+    15: {"crop": "Tomato", "disease": "Mosaic Virus",
+         "solution": "No cure. Remove infected plants. Disinfect tools."},
+
+    16: {"crop": "Tomato", "disease": "Healthy",
+         "solution": "No treatment needed. Maintain balanced nutrients and watering."}
 }
 
 IMG_SIZE = 224
